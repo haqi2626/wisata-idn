@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
@@ -15,8 +16,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', function () {
         return view('pages.dashboard');
     })->name('home');
-    Route::resource('users', UserController::class);
-    Route::resource('categories', CategoryController::class);
-    Route::resource('products', ProductController::class);
-    Route::resource('orders', OrderController::class);
+    // Route::resource('users', UserController::class);
+    // Route::resource('categories', CategoryController::class);
+    // Route::resource('products', ProductController::class);
+    // Route::resource('orders', OrderController::class);
+
+    Route::post('auth/login', [AuthController::class , 'login']);
+    Route::post('auth/login', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 });

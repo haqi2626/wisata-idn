@@ -1,61 +1,77 @@
-<?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Category;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
-    //index
-    public function index(Request $request)
+    public function __construct()
     {
-        $categories = Category::when($request->keyword, function ($query) use ($request) {
-            $query->where('name', 'like', "%{$request->keyword}%")
-                ->orWhere('description', 'like', "%{$request->keyword}%");
-        })->orderBy('id', 'desc')->paginate(10);
-        return view('pages.categories.index', compact('categories'));
+        $this->middleware('auth:sanctum'); // Proteksi dengan Bearer Token
     }
 
-    //create
-    public function create()
+    // Get all categories
+    public function index()
     {
-        return view('pages.categories.create');
+        return response()->json(Category::all(), 200);
     }
 
-    //store
+    // Store category
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
         ]);
 
-        Category::create($request->all());
-        return redirect()->route('categories.index')->with('success', 'Category created successfully');
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $category = Category::create($request->all());
+        return response()->json($category, 201);
     }
 
-    //edit
-    public function edit(Category $category)
+    // Show category by ID
+    public function show($id)
     {
-        return view('pages.categories.edit', compact('category'));
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+        return response()->json($category, 200);
     }
 
-    //update
-    public function update(Request $request, Category $category)
+    // Update category
+    public function update(Request $request, $id)
     {
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
 
-        $category->name = $request->name;
-        $category->description = $request->description;
-        $category->save();
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
 
-        return redirect()->route('categories.index')->with('success', 'Category updated successfully');
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $category->update($request->all());
+        return response()->json($category, 200);
     }
 
-    //destroy
-    public function destroy(Category $category)
+    // Delete category
+    public function destroy($id)
     {
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
         $category->delete();
-        return redirect()->route('categories.index')->with('success', 'Category deleted successfully');
+        return response()->json(['message' => 'Category deleted'], 200);
     }
 }
